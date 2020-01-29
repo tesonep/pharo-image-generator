@@ -46,6 +46,16 @@ ImageGenerator >> saveImage [
 			exitAfterGeneration ifTrue: [ Smalltalk quitPrimitive ]].
 ]
 
+{ #category : #accessing }
+ImageGenerator >> targetName [
+	^ targetName
+]
+
+{ #category : #'api - configuration' }
+ImageGenerator >> targetName: anObject [
+	targetName := anObject
+]
+
 { #category : #'api - configuration' }
 ImageGenerator >> withBigArray [
 
