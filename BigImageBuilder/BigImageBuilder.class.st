@@ -4,10 +4,169 @@ Class {
 	#instVars : [
 		'numberOfClasses',
 		'numberOfMethods',
-		'numberOfPackages'
+		'numberOfPackages',
+		'deep',
+		'currentHierarchyLevel'
 	],
 	#category : #BigImageBuilder
 }
+
+{ #category : #templates }
+BigImageBuilder >> _addCellLayoutMenuItems: aMenu hand: aHand [
+	"Cell (e.g., child) related items"
+	| menu sub |
+	menu := UIManager default newMenuIn: self for: self.
+	menu addUpdating: #hasDisableTableLayoutString selector: #changeDisableTableLayout.
+	menu addLine.
+	sub := UIManager default newMenuIn: self for: self.
+	#(#rigid #shrinkWrap #spaceFill)
+		do: [ :sym | 
+			sub
+				addUpdating: #hResizingString:
+				target: self
+				selector: #hResizing:
+				argumentList: (Array with: sym) ].
+	menu add: 'horizontal resizing' subMenu: sub.
+	sub := UIManager default newMenuIn: self for: self.
+	#(#rigid #shrinkWrap #spaceFill)
+		do: [ :sym | 
+			sub
+				addUpdating: #vResizingString:
+				target: self
+				selector: #vResizing:
+				argumentList: (Array with: sym) ].
+	menu add: 'vertical resizing' subMenu: sub.
+	aMenu ifNotNil: [ aMenu add: 'child layout' subMenu: menu ].
+	^ menu
+]
+
+{ #category : #templates }
+BigImageBuilder >> _baseline: spec [
+	| repository |
+
+	repository := self packageRepositoryURL.
+	spec for: #common do: [ 
+		spec postLoadDoIt: #postload:package:.
+		spec baseline: 'BasicTools' with: [ spec repository: repository ].
+		spec baseline: 'Athens' with: [ spec repository: repository ].
+		spec baseline: 'Flashback' with: [ spec repository: repository ].
+		spec baseline: 'Shift' with: [ 
+			spec
+				repository: repository;
+				loads: 'shift-tests' ].
+
+		spec baseline: 'Traits' with: [ 
+			spec
+				repository: repository;
+				loads: 'traits-tests' ].
+
+		spec baseline: 'Slot' with: [ 
+			spec
+				repository: repository;
+				loads: 'slot-tests' ].
+
+		spec baseline: 'Clap' with: [ 
+			spec
+				repository: repository;
+				loads: 'development' ].
+
+		spec baseline: 'SUnit' with: [ 
+			spec
+				repository: repository;
+				loads: 'Tests' ].
+		
+		spec baseline: 'BlueInk' with: [ 
+ 			spec repository: repository; loads: #('Tests') ].				
+
+		spec baseline: 'EnlumineurFormatter' with: [ 
+			spec
+				repository: repository;
+				loads: #( 'Tests' 'UI-Tests' ) ].
+				
+		spec package: 'Network-Tests'.
+		spec package: 'Network-Mail-Tests'.
+		spec package: 'Gofer-Tests'.
+		spec package: 'System-Hashing-Testing'.
+		spec package: 'Rubric-SpecFindReplaceDialog'.
+		spec baseline: 'Metacello' with: [ 
+			spec
+				repository: repository;
+				loads: #( 'Tests' ) ].
+		spec package: 'MonticelloGUI-Tests'.
+		"Later we will load the UI of enlumineur probably here 
+		"
+		spec baseline: 'KernelTests' with: [ spec repository: repository ].
+		spec baseline: 'Shout' with: [ spec repository: repository ].
+		spec baseline: 'GeneralHelp' with: [ spec repository: repository ].
+		spec
+			baseline: 'ReflectionMirrors'
+			with: [ spec repository: repository ].
+		spec baseline: 'FuzzyMatcher' with: [ spec repository: repository ].
+		spec baseline: 'QA' with: [ spec repository: repository ].
+		spec baseline: 'OSWindow' with: [ spec repository: repository ].
+		spec baseline: 'Refactoring' with: [ spec repository: repository ].
+		spec baseline: 'Epicea' with: [ spec repository: repository ].
+		spec baseline: 'Misc' with: [ spec repository: repository ].
+		spec baseline: 'Fuel' with: [ 
+			spec
+				repository: repository;
+				loads: #( 'Tests' ) ].
+		spec baseline: 'GeneralTests' with: [ spec repository: repository ].
+		spec baseline: 'Zodiac' with: [ spec repository: repository ].
+		spec baseline: 'SortFunctions' with: [ spec repository: repository ].
+		spec package: 'BaselineOfPharoBootstrap'.
+		spec package: 'BaselineOfMonticello'.
+		spec package: 'BaselineOfMetacello'.
+		spec package: 'BaselineOfTelePharoSupport'.
+		spec
+			baseline: 'ReferenceFinder'
+			with: [ spec repository: repository ].
+		spec baseline: 'Refactoring2' with: [ spec repository: repository ].
+		spec baseline: 'ClassParser' with: [ spec repository: repository ].
+		spec baseline: 'Calypso' with: [ 
+			spec
+				repository: repository;
+				loads: #( 'FullEnvironment' 'SystemBrowser' 'Tests' ) ].
+		spec baseline: 'Ring' with: [ spec repository: repository ].
+		spec baseline: 'PharoGlamour' with: [ spec repository: repository ].
+		spec baseline: 'PharoGT' with: [ spec repository: repository ].
+		spec baseline: 'Catalog' with: [ spec repository: repository ].
+		spec package: 'Pharo-WelcomeHelp' ]
+]
+
+{ #category : #templates }
+BigImageBuilder >> _changeSourceSelector: oldSelector keywordsIntervals: oldIntervals arguments: oldArguments [
+	"If this is the same number of arguments, we try a one to one replacement of selector parts and arguments. If this is not the c
+ase try to rewrite the signature as a whole, what unfortunately drops the comments within the signature."
+	| arguments |
+
+	[ (oldIntervals size = self keywordsPositions size and: [ oldArguments size = arguments size ])
+		ifTrue: [
+			self selectorParts keysAndValuesDo: [ :index :part |
+				self addReplacement: (RBStringReplacement 
+					replaceFrom: (oldIntervals at: index) first
+					to: (oldIntervals at: index) last
+					with: part) ].
+			oldArguments with: arguments do: [ :old :new | 
+				self addReplacement: (RBStringReplacement 
+					replaceFrom: old start
+					to: old stop
+					with: new name) ] ]
+		ifFalse: [
+			self addReplacement: (RBStringReplacement
+				replaceFrom: oldIntervals first first
+				to: (oldArguments notEmpty
+					ifTrue: [ oldArguments last stop ]
+					ifFalse: [ oldIntervals last last ])
+				with: (String streamContents: [ :stream |
+					self selectorParts keysAndValuesDo: [ :index :part |
+						index = 1 ifFalse: [ stream space ].
+						stream nextPutAll: part.
+						index <= arguments size
+							ifTrue: [ stream space; nextPutAll: (arguments at: index) name ] ] ])) ] ]
+		on: Error
+		do: [ :ex | ex return ]
+]
 
 { #category : #templates }
 BigImageBuilder >> _fontContents [
@@ -873,8 +1032,10 @@ BigImageBuilder >> addClassIndex: classIndex toPackage: package extendPackage: e
 		poolDictionaries: ''
 		package: package name.
 	
-	1 to: numberOfMethods do: [ :methodIndex | 
-		self addMethodIndex: methodIndex toClass: class ]
+	(1 to: numberOfMethods) asArray 
+		do: [ :methodIndex | self addMethodIndex: methodIndex toClass: class ]
+		displayingProgress: [ :index | 'Method: ', index printString ]
+		every: 0
 ]
 
 { #category : #building }
@@ -890,20 +1051,34 @@ BigImageBuilder >> addPackageIndex: packageIndex [
 	package := RPackage named: 'BigPackage', packageIndex printString. 
 	package register.
 	
-	1 to: numberOfClasses do: [ :classIndex |
-		self 
-			addClassIndex: classIndex 
-			toPackage: package
-			extendPackage: (packageIndex > 1 
-				ifTrue: [ RPackageOrganizer default packageNamed: 'BigPackage', (packageIndex - 1) printString ] 
-				ifFalse: [ nil ]) ] 
+	currentHierarchyLevel := currentHierarchyLevel + 1.
+	currentHierarchyLevel > deep ifTrue: [ currentHierarchyLevel := 1 ].
+	(1 to: numberOfClasses) asArray  
+		do: [ :classIndex |
+			self 
+				addClassIndex: classIndex 
+				toPackage: package
+				extendPackage: (currentHierarchyLevel > 1 
+					ifTrue: [ RPackageOrganizer default packageNamed: 'BigPackage', (packageIndex - 1) printString ] 
+					ifFalse: [ nil ]) ] 
+			displayingProgress: [ :index | 'BigClass_', index printString ]
+			every: 0.
 ]
 
 { #category : #building }
 BigImageBuilder >> build [
 
-	1 to: numberOfPackages do: [ :packageIndex |
-		self addPackageIndex: packageIndex ].
+	currentHierarchyLevel := 0.
+	(1 to: numberOfPackages) asArray 
+		do: [ :index | self addPackageIndex: index ]
+		displayingProgress: [ :index | 'BigPackage', index printString ]
+		every: 0.
+]
+
+{ #category : #accessing }
+BigImageBuilder >> hierarchyDeep: aNumber [
+
+	deep := aNumber
 ]
 
 { #category : #initialization }
@@ -924,8 +1099,19 @@ BigImageBuilder >> methodHeuristic [
 	_printStringLimitedTo:using:
 	_printStringLimitedTo:using:
 	_printStringLimitedTo:using:
-	_fontContents
-	_testNegativeIntegerPrinting
+	_addCellLayoutMenuItems:hand:
+	_addCellLayoutMenuItems:hand:
+	_addCellLayoutMenuItems:hand:
+	_addCellLayoutMenuItems:hand:
+	_changeSourceSelector:keywordsIntervals:arguments:
+	_changeSourceSelector:keywordsIntervals:arguments:
+	_changeSourceSelector:keywordsIntervals:arguments:
+	_changeSourceSelector:keywordsIntervals:arguments:
+	_baseline:
+	_baseline:
+	_baseline:
+	_baseline:
+	"_fontContents"
 	_testNegativeIntegerPrinting
 	_testNegativeIntegerPrinting
 	_modifySection:sectionIndex:repository:requiredProjects:packages:dependencies:includes:files:repositories:preLoadDoIts:postLoadDoIts:supplyingAnswers:groups:versionSpecsDo:extra:
