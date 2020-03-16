@@ -74,6 +74,7 @@ SimpleBigPackageGenerator >> generateClass: index [
 
 	aClass := Object
 		subclass: #AClass , index printString
+		uses: self traitCompositionOfClasses
 		instanceVariableNames: (instanceVariables joinUsing: ' ')
 		classVariableNames: ''
 		package: packageName.
@@ -154,4 +155,10 @@ SimpleBigPackageGenerator >> packageName [
 { #category : #accessing }
 SimpleBigPackageGenerator >> packageName: anObject [
 	packageName := anObject
+]
+
+{ #category : #configuring }
+SimpleBigPackageGenerator >> traitCompositionOfClasses [
+
+	^ {}
 ]
