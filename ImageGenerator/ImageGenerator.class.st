@@ -10,6 +10,12 @@ Class {
 }
 
 { #category : #'api - configuration' }
+ImageGenerator >> addGenerator: aGenerator [
+
+	generators add: aGenerator
+]
+
+{ #category : #'api - configuration' }
 ImageGenerator >> exitAfterGeneration [
 
 	exitAfterGeneration := true
