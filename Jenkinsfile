@@ -16,8 +16,7 @@ node('unix') {
 
 	stage("Generating the image"){
 		// Generating the Image
-//		sh "./pharo largeImage.image eval --save \"BigImageBuilder new numberOfPackages: 250;	numberOfClasses: 100; hierarchyDeep: 15; build.\""
-		sh "./pharo largeImage.image eval --save \"BigImageBuilder new numberOfPackages: 5;	numberOfClasses: 100; hierarchyDeep: 15; build.\""
+		sh "./pharo largeImage.image eval --save \"BigImageBuilder new numberOfPackages: 250;	numberOfClasses: 100; hierarchyDeep: 15; build.\""
 	}
 	
 	// Zipping the image
