@@ -8,5 +8,7 @@ Class {
 BaselineOfImageGenerator >> baseline: spec [
 	<baseline>
 	spec for: #common do: [ 
-		spec package: 'ImageGenerator' ]
+		spec 
+			package: 'ImageGenerator';
+			package: 'BigImageBuilder' ]
 ]
