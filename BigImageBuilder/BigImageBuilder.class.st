@@ -1228,6 +1228,10 @@ BigImageBuilder >> addPackageIndex: packageIndex [
 	
 	package := RPackage named: 'BigPackage', packageIndex printString. 
 	package register.
+
+	('Processing Package: {1}' format: { packageIndex }) traceCr.
+
+	Smalltalk snapshot: true andQuit: false.
 	
 	currentHierarchyLevel := currentHierarchyLevel + 1.
 	currentHierarchyLevel > deep ifTrue: [ currentHierarchyLevel := 1 ].
@@ -1241,6 +1245,9 @@ BigImageBuilder >> addPackageIndex: packageIndex [
 					ifFalse: [ nil ]) ] 
 			displayingProgress: [ :index | 'BigClass_', index printString ]
 			every: 0.
+			
+	('Finish Processing Package: {1}' format: { packageIndex }) traceCr.
+	
 ]
 
 { #category : #building }
